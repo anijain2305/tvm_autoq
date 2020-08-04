@@ -7,12 +7,7 @@ except Exception:
 import tensorflow_hub as hub
 
 import tvm
-from tvm import te
 from tvm import relay
-from tvm.contrib.download import download_testdata
-import tvm.relay.testing.tf as tf_testing
-import logging
-import os
 
 from common.dataset_prep import TFImagenetDatasetPreparator as DatasetPreparator
 from common.model_compiler import compile_and_run
@@ -65,6 +60,9 @@ def calib_dataset_iter(dataset, input_name):
 # ----------------
 # We use the Relay MxNet frontend to import a model from the Gluon model zoo.
 def get_model():
+
+    relay_file = "relay.json"
+    relay_params = "relay.params"
     from tensorflow.python.framework.convert_to_constants import convert_variables_to_constants_v2
     model = tf.keras.Sequential([
         hub.KerasLayer(tf_hub_links[model_name], output_shape=[1001])
@@ -92,6 +90,16 @@ def get_model():
     graph_def = parser.parse()
     mod, params = relay.frontend.from_tensorflow(graph_def,
                                                  shape={"data": (1, img_size, img_size, 3)})
+
+    # with open(relay_file, "w") as fo:
+    #     fo.write(tvm.ir.save_json(mod))
+    # with open(relay_params, "wb") as fo:
+    #     fo.write(relay.save_param_dict(params))
+
+    # with open(relay_file, "r") as fi:
+    #     mod = tvm.ir.load_json(fi.read())
+    # with open(relay_params, "rb") as fi:
+    #     params = relay.load_param_dict(fi.read())
     return mod, params
 
 
@@ -104,13 +112,13 @@ def main():
 
     # Original 
     fp32_mod, params = get_model()
-    compile_and_run(fp32_mod, params, target, "tf_" + model_name + "_fp32", val_dataset, args)
+    compile_and_run(fp32_mod, params, target, "tf_" + model_name + "_fp32", val_dataset, 'data', args)
     
 
     # Non data aware 
     fp32_mod, params = get_model()
     mod = quantize(fp32_mod, params, False, None)
-    compile_and_run(mod, params, target, "tf_" + model_name + "_no_data", val_dataset, args)
+    compile_and_run(mod, params, target, "tf_" + model_name + "_no_data", val_dataset, 'data', args)
 
 
     # Non data aware 
@@ -118,7 +126,7 @@ def main():
     c = calib_dataset_iter(calib_dataset, 'data')
     fp32_mod, params = get_model()
     mod = quantize(fp32_mod, params, True, c)
-    compile_and_run(mod, params, target, "tf_" + model_name + "_data", val_dataset, args)
+    compile_and_run(mod, params, target, "tf_" + model_name + "_data", val_dataset, 'data', args)
 
 
 if __name__ == '__main__':

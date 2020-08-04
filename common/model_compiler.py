@@ -40,7 +40,7 @@ class ModelCompiler(object):
 
 
 class ModelExecutor(object):
-    def run(self, artifact_name, dataset):
+    def run(self, artifact_name, dataset, input_name):
         base = os.getcwd() + '/compiled_models/' + artifact_name
 
         path_lib = base + '_deploy_lib.tar'
@@ -65,7 +65,7 @@ class ModelExecutor(object):
         for _, record in dataset.items():
             # record[0] is tensor, record[1] is label
             data, label = record
-            rt_mod.set_input(**{'data': data})
+            rt_mod.set_input(**{input_name: data})
             rt_mod.run()
             tvm_res = np.squeeze(rt_mod.get_output(0).asnumpy())
             tvm_pred = np.argsort(tvm_res)[-5:][::-1]
@@ -74,15 +74,15 @@ class ModelExecutor(object):
         print(artifact_name, acc.report())
 
 
-def compile_and_run(mod, params, target, artifact_name, val_dataset, args):
+def compile_and_run(mod, params, target, artifact_name, val_dataset, input_name, args):
     if args.only_compile == False and args.only_inference == False:
         mc = ModelCompiler()
         mc.compile(mod, params, target, artifact_name)
         me = ModelExecutor()
-        me.run(artifact_name, val_dataset)
+        me.run(artifact_name, val_dataset, input_name)
     elif args.only_compile:
         mc = ModelCompiler()
         mc.compile(mod, params, target, artifact_name)
     elif args.only_inference:
         me = ModelExecutor()
-        me.run(artifact_name, val_dataset)
+        me.run(artifact_name, val_dataset, input_name)

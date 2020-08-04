@@ -11,8 +11,8 @@ import glob
 import random
  
 import mxnet as mx
-# from tflite_inference import TFLiteExecutor
-# from accuracy_measurement import AccuracyAggregator
+from PIL import Image
+from torchvision import transforms
 
 class ImagenetDatasetPreparator(object):
     def __init__(self, val_path, num_calib_samples, num_val_samples):
@@ -57,8 +57,8 @@ class MXNetImagenetDatasetPreparator(ImagenetDatasetPreparator):
     def __init__(self, val_path, num_calib_samples, num_val_samples):
         super().__init__(val_path, num_calib_samples, num_val_samples)
 
-    def preprocess(self, raw_image, data_shape):
-        image = mx.image.imread(raw_image)
+    def preprocess(self, filename, data_shape):
+        image = mx.image.imread(filename)
         resized = mx.image.resize_short(image, 224) #minimum 224x224 images
         cropped, crop_info = mx.image.center_crop(resized, (224, 224))
         normalized = mx.image.color_normalize(cropped.astype(np.float32)/255,
@@ -74,9 +74,9 @@ class TFImagenetDatasetPreparator(ImagenetDatasetPreparator):
     def __init__(self, val_path, num_calib_samples, num_val_samples):
         super().__init__(val_path, num_calib_samples, num_val_samples)
 
-    def preprocess(self, raw_image, data_shape):
+    def preprocess(self, filename, data_shape):
         height = width = data_shape
-        image = tf.io.read_file(raw_image)
+        image = tf.io.read_file(filename)
         image = tf.image.decode_jpeg(image, channels=3)
         central_crop = True
         central_fraction = 0.875
@@ -103,3 +103,20 @@ class TFImagenetDatasetPreparator(ImagenetDatasetPreparator):
             return image
 
 
+class PytorchImagenetDatasetPreparator(ImagenetDatasetPreparator):
+    def __init__(self, val_path, num_calib_samples, num_val_samples):
+        super().__init__(val_path, num_calib_samples, num_val_samples)
+
+    def preprocess(self, filename, data_shape):
+        height = width = data_shape
+        input_image = Image.open(filename)
+        preprocess = transforms.Compose([
+            transforms.Resize(256),
+            transforms.CenterCrop(data_shape),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ])
+        input_tensor = preprocess(input_image)
+        input_batch = input_tensor.unsqueeze(0) # create a mini-batch as expected by the model
+        input_batch = input_batch.numpy()
+        return input_batch

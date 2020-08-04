@@ -1,11 +1,6 @@
 import tvm
-from tvm import te
 from tvm import relay
-import mxnet as mx
-from tvm.contrib.download import download_testdata
 from mxnet import gluon
-import logging
-import os
 
 from common.dataset_prep import MXNetImagenetDatasetPreparator as DatasetPreparator
 from common.model_compiler import compile_and_run
@@ -57,13 +52,13 @@ def main():
 
     # Original 
     fp32_mod, params = get_model()
-    compile_and_run(fp32_mod, params, target, "mxnet_" + model_name + "_fp32", val_dataset, args)
+    compile_and_run(fp32_mod, params, target, "mxnet_" + model_name + "_fp32", val_dataset, 'data', args)
     
 
     # Non data aware 
     fp32_mod, params = get_model()
     mod = quantize(fp32_mod, params, False, None)
-    compile_and_run(mod, params, target, "mxnet_" + model_name + "_no_data", val_dataset, args)
+    compile_and_run(mod, params, target, "mxnet_" + model_name + "_no_data", val_dataset, 'data', args)
 
 
     # Non data aware 
@@ -71,7 +66,7 @@ def main():
     c = calib_dataset_iter(calib_dataset, 'data')
     fp32_mod, params = get_model()
     mod = quantize(fp32_mod, params, True, c)
-    compile_and_run(mod, params, target, "mxnet_" + model_name + "_data", val_dataset, args)
+    compile_and_run(mod, params, target, "mxnet_" + model_name + "_data", val_dataset, 'data', args)
 
 
 if __name__ == '__main__':
