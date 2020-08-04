@@ -18,7 +18,7 @@ args = parser.parse_args()
 
 batch_size = 1
 model_name = "resnet50"
-target = 'llvm'
+target = 'llvm -mcpu=cascadelake'
 ctx = tvm.context(target)
 
 ###############################################################################
@@ -84,7 +84,7 @@ def get_model():
 def main():
     val_path = '/home/ubuntu/tensorflow_datasets/downloads/manual/imagenet2012/val'
     num_calib_samples = 100
-    num_test_samples = 100
+    num_test_samples = 1000
     dataset_preparator = DatasetPreparator(val_path, num_calib_samples, num_test_samples)
     
     val_dataset = dataset_preparator.preprocess_val(224, 'float32')

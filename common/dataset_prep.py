@@ -109,7 +109,7 @@ class PytorchImagenetDatasetPreparator(ImagenetDatasetPreparator):
 
     def preprocess(self, filename, data_shape):
         height = width = data_shape
-        input_image = Image.open(filename)
+        input_image = Image.open(filename).convert('RGB')
         preprocess = transforms.Compose([
             transforms.Resize(256),
             transforms.CenterCrop(data_shape),
