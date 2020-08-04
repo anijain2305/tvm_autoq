@@ -15,7 +15,7 @@ parser.add_argument("--only_compile", action="store_true", default=False, help="
 args = parser.parse_args()
 
 batch_size = 1
-model_name = "resnet18_v1"
+model_name = "resnet50_v1"
 target = 'llvm'
 ctx = tvm.context(target)
 
