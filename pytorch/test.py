@@ -95,15 +95,15 @@ def main():
     
 
     # Non data aware 
-    fp32_mod, params = get_model()
-    mod = quantize(fp32_mod, params, False, None)
-    compile_and_run(mod, params, target, "pytorch_" + model_name + "_no_data", val_dataset, input_names[0], args)
+    # fp32_mod, params = get_model()
+    # mod = quantize(fp32_mod, params, False, None)
+    # compile_and_run(mod, params, target, "pytorch_" + model_name + "_no_data", val_dataset, input_names[0], args)
 
 
     # Non data aware 
-    calib_dataset = dataset_preparator.preprocess_calib(224, 'float32')
-    c = calib_dataset_iter(calib_dataset, 'data')
     fp32_mod, params = get_model()
+    calib_dataset = dataset_preparator.preprocess_calib(224, 'float32')
+    c = calib_dataset_iter(calib_dataset, input_names[0])
     mod = quantize(fp32_mod, params, True, c)
     compile_and_run(mod, params, target, "pytorch_" + model_name + "_data", val_dataset, input_names[0], args)
 

@@ -16,7 +16,7 @@ args = parser.parse_args()
 
 batch_size = 1
 model_name = "resnet50_v1"
-target = 'llvm -mcpu=cascadelake'
+target = 'llvm'
 ctx = tvm.context(target)
 
 ###############################################################################
@@ -27,7 +27,6 @@ ctx = tvm.context(target)
 def calib_dataset_iter(dataset, input_name):
     for _, record in dataset.items():
         # record[0] is tensor, record[1] is label
-        # print(record[0])
         yield {input_name: record[0]}
 
 ###############################################################################
@@ -55,10 +54,10 @@ def main():
     compile_and_run(fp32_mod, params, target, "mxnet_" + model_name + "_fp32", val_dataset, 'data', args)
     
 
-    # Non data aware 
-    fp32_mod, params = get_model()
-    mod = quantize(fp32_mod, params, False, None)
-    compile_and_run(mod, params, target, "mxnet_" + model_name + "_no_data", val_dataset, 'data', args)
+    # # Non data aware 
+    # fp32_mod, params = get_model()
+    # mod = quantize(fp32_mod, params, False, None)
+    # compile_and_run(mod, params, target, "mxnet_" + model_name + "_no_data", val_dataset, 'data', args)
 
 
     # Non data aware 
